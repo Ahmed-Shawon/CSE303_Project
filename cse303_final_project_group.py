@@ -597,18 +597,18 @@ print("Streamlit app will be available at:", public_url)
 # Run the app (make sure app_streamlit.py is in your current directory)
 # !streamlit run app.py --server.port 8501 > /dev/null 2>&1 &
 
-from google.colab import auth
-auth.authenticate_user()
+# from google.colab import auth
+# auth.authenticate_user()
 
-!git config --global user.email "hassan.a.shawon@gmail.com"
-!git config --global user.name "Ahmed-Shawon"
+# !git config --global user.email "hassan.a.shawon@gmail.com"
+# !git config --global user.name "Ahmed-Shawon"
 
-# Commented out IPython magic to ensure Python compatibility.
-!git clone https://github.com/Ahmed-Shawon/CSE303_Project.git
-# %cd CSE303_Project
+# # Commented out IPython magic to ensure Python compatibility.
+# !git clone https://github.com/Ahmed-Shawon/CSE303_Project.git
+# # %cd CSE303_Project
 
-# Move your Streamlit app
-!mv /content/app.py ./CSE303_Project/
+# # Move your Streamlit app
+# !mv /content/app.py ./CSE303_Project/
 
-# Move your dataset from Google Drive
-!cp "/content/drive/MyDrive/student_survey.csv" ./CSE303_Project/
+# # Move your dataset from Google Drive
+# !cp "/content/drive/MyDrive/student_survey.csv" ./CSE303_Project/
