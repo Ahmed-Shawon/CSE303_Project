@@ -31,7 +31,7 @@ import statsmodels.formula.api as smf
 """
 
 # Load CSV file
-df = pd.read_csv("/content/drive/MyDrive/student_survey.csv")
+df = pd.read_csv("student_survey.csv")
 
 # from google.colab import drive
 # drive.mount('/content/drive')
@@ -372,8 +372,8 @@ print("Result:", "Reject H0 " if p_val < alpha else "Fail to reject H0 ")
 
 """# APPlication"""
 
-!pip install streamlit
-!pip install pyngrok
+# !pip install streamlit
+# !pip install pyngrok
 
 # Commented out IPython magic to ensure Python compatibility.
 # # ===============================
