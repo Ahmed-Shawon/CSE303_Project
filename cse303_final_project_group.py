@@ -372,8 +372,8 @@ print("Result:", "Reject H0 " if p_val < alpha else "Fail to reject H0 ")
 
 """# APPlication"""
 
-!pip install streamlit
-!pip install pyngrok
+# !pip install streamlit
+# !pip install pyngrok
 
 # Commented out IPython magic to ensure Python compatibility.
 # # ===============================
