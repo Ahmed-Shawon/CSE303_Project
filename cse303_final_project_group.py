@@ -595,7 +595,7 @@ print("Streamlit app will be available at:", public_url)
 
 
 # Run the app (make sure app_streamlit.py is in your current directory)
-!streamlit run app.py --server.port 8501 > /dev/null 2>&1 &
+# !streamlit run app.py --server.port 8501 > /dev/null 2>&1 &
 
 from google.colab import auth
 auth.authenticate_user()
