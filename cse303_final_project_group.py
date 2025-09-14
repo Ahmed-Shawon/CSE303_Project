@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-"""CSE303_final_project_group.ipynb"""
+"""CSE303_final_project_group_streamlit.py"""
 
+import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
@@ -8,7 +9,11 @@ import plotly.figure_factory as ff
 from scipy import stats
 import statsmodels.formula.api as smf
 from sklearn.preprocessing import StandardScaler
-from pyngrok import ngrok
+
+# ===============================
+# Page title
+# ===============================
+st.title("CSE303 Student Survey Analysis")
 
 # ===============================
 # Load CSV
@@ -40,15 +45,34 @@ numeric_cols = [
 ]
 
 # ===============================
-# EDA: Histograms with boxplots
+# Sidebar Filters
 # ===============================
-for col in numeric_cols:
-    fig = px.histogram(df, x=col, nbins=20, title=f"Distribution of {col}", marginal="box")
-    fig.show()
+st.sidebar.header("Filters")
+year_filter = st.sidebar.selectbox("Year of Study", ["All"] + sorted(df["Year_of_Study"].unique().tolist()))
+gender_filter = st.sidebar.selectbox("Gender", ["All", "Male", "Female"])
+job_filter = st.sidebar.selectbox("PartTime Job Status", ["All", "Yes", "No"])
+
+filtered_df = df.copy()
+if year_filter != "All":
+    filtered_df = filtered_df[filtered_df["Year_of_Study"] == year_filter]
+if gender_filter != "All":
+    filtered_df = filtered_df[filtered_df["Gender"] == (1 if gender_filter == "Male" else 0)]
+if job_filter != "All":
+    filtered_df = filtered_df[filtered_df["PartTime_Job_Status"] == (1 if job_filter == "Yes" else 0)]
 
 # ===============================
-# Scatter Plots (with regression trendline)
+# EDA: Histograms with Boxplots
 # ===============================
+st.header("EDA: Histograms with Boxplots")
+for col in numeric_cols:
+    st.subheader(f"Distribution of {col}")
+    fig = px.histogram(filtered_df, x=col, nbins=20, marginal="box", title=f"{col} Distribution")
+    st.plotly_chart(fig)
+
+# ===============================
+# Scatter Plots with Regression
+# ===============================
+st.header("Scatter Plots with Regression Trendline")
 relationships = [
     ("Stress_Level", "Year_of_Study"),
     ("CGPA", "Gender"),
@@ -60,36 +84,40 @@ relationships = [
 ]
 
 for y, x in relationships:
-    fig = px.scatter(df, x=x, y=y, title=f"{y} vs {x}", trendline="ols")
-    fig.show()
+    st.subheader(f"{y} vs {x}")
+    fig = px.scatter(filtered_df, x=x, y=y, trendline="ols", title=f"{y} vs {x}")
+    st.plotly_chart(fig)
 
 # ===============================
-# Boxplots for outlier detection
+# Boxplots for Outlier Detection
 # ===============================
+st.header("Boxplots for Outlier Detection")
 for col in numeric_cols:
-    fig = px.box(df, y=col, title=f"Box Plot for {col}")
-    fig.show()
+    st.subheader(f"Box Plot for {col}")
+    fig = px.box(filtered_df, y=col, title=f"Box Plot for {col}")
+    st.plotly_chart(fig)
 
 # ===============================
-# Remove outliers using IQR capping
+# Remove Outliers using IQR Capping
 # ===============================
 for col in numeric_cols:
-    Q1, Q3 = df[col].quantile([0.25, 0.75])
+    Q1, Q3 = filtered_df[col].quantile([0.25, 0.75])
     IQR = Q3 - Q1
     lower, upper = Q1 - 1.5 * IQR, Q3 + 1.5 * IQR
-    df[col] = np.where(df[col] < lower, lower, df[col])
-    df[col] = np.where(df[col] > upper, upper, df[col])
+    filtered_df[col] = np.where(filtered_df[col] < lower, lower, filtered_df[col])
+    filtered_df[col] = np.where(filtered_df[col] > upper, upper, filtered_df[col])
 
 # ===============================
 # Standardization
 # ===============================
 scaler = StandardScaler()
-df[numeric_cols] = scaler.fit_transform(df[numeric_cols])
+filtered_df[numeric_cols] = scaler.fit_transform(filtered_df[numeric_cols])
 
 # ===============================
 # Correlation Heatmap
 # ===============================
-corr = df[numeric_cols].corr()
+st.header("Correlation Heatmap")
+corr = filtered_df[numeric_cols].corr()
 fig = ff.create_annotated_heatmap(
     z=corr.values,
     x=list(corr.columns),
@@ -98,8 +126,7 @@ fig = ff.create_annotated_heatmap(
     colorscale="RdBu",
     showscale=True
 )
-fig.update_layout(title="Correlation Heatmap")
-fig.show()
+st.plotly_chart(fig)
 
 # ===============================
 # Regression Models
@@ -130,86 +157,57 @@ multiple_models = [
     ('Extracurricular_pariticipation', ['Extracurricular_Hours','Gender','Sleep_Hours'])
 ]
 
-# Function to fit model
 def fit_and_print(formula, df):
     model = smf.ols(formula=formula, data=df).fit()
-    print("=== Model:", formula, "===")
-    print(model.summary())
-    print("\nR-squared: {:.3f}\n".format(model.rsquared))
+    st.text(f"=== Model: {formula} ===")
+    st.text(model.summary())
+    st.text(f"R-squared: {model.rsquared:.3f}")
     return model
 
-# Fit simple models
+st.header("Simple Linear Regression Models")
 simple_fitted = {}
-print("\n### SIMPLE LINEAR MODELS ###\n")
 for target, pred in simple_models:
     formula = f"{target} ~ {pred}"
-    simple_fitted[formula] = fit_and_print(formula, df)
+    simple_fitted[formula] = fit_and_print(formula, filtered_df)
 
-# Fit multiple models
+st.header("Multiple Linear Regression Models")
 multiple_fitted = {}
-print("\n### MULTIPLE LINEAR MODELS ###\n")
 for target, preds in multiple_models:
     formula = f"{target} ~ {' + '.join(preds)}"
-    multiple_fitted[formula] = fit_and_print(formula, df)
-
-# ===============================
-# Visualize simple regression (plotly)
-# ===============================
-for (target, pred), model in zip(simple_models, simple_fitted.values()):
-    fig = px.scatter(df, x=pred, y=target, trendline="ols", title=f"Regression: {target} vs {pred}")
-    fig.show()
-
-# ===============================
-# Visualize multiple regression (Actual vs Predicted)
-# ===============================
-for (target, preds), model in zip(multiple_models, multiple_fitted.values()):
-    predicted = model.predict(df)
-    fig = px.scatter(x=predicted, y=df[target], labels={'x':'Predicted','y':'Actual'},
-                     title=f"Multiple Regression: {target} ~ {' + '.join(preds)}")
-    fig.add_shape(type='line', x0=predicted.min(), x1=predicted.max(),
-                  y0=df[target].min(), y1=df[target].max(), line=dict(color='red', dash='dash'))
-    fig.show()
+    multiple_fitted[formula] = fit_and_print(formula, filtered_df)
 
 # ===============================
 # Hypothesis Testing
 # ===============================
+st.header("Hypothesis Testing")
 alpha = 0.05
 
-# 1. Independent t-test (CGPA by Gender)
-male_cgpa = df[df["Gender"] == 0]["CGPA"]
-female_cgpa = df[df["Gender"] == 1]["CGPA"]
+# 1. Independent t-test
+male_cgpa = filtered_df[filtered_df["Gender"] == 0]["CGPA"]
+female_cgpa = filtered_df[filtered_df["Gender"] == 1]["CGPA"]
 t_stat, p_val = stats.ttest_ind(male_cgpa, female_cgpa, nan_policy="omit")
-print("\n1. Independent t-test: CGPA by Gender")
-print(f"t-statistic = {t_stat}, p-value = {p_val}")
-print("Result:", "Reject H0" if p_val < alpha else "Fail to reject H0")
+st.subheader("1. Independent t-test: CGPA by Gender")
+st.write(f"t-statistic = {t_stat}, p-value = {p_val}")
+st.write("Result:", "Reject H0" if p_val < alpha else "Fail to reject H0")
 
-# 2. One-way ANOVA (Stress_Level ~ Year_of_Study)
-anova_groups = [group["Stress_Level"].dropna() for _, group in df.groupby("Year_of_Study")]
+# 2. One-way ANOVA
+anova_groups = [group["Stress_Level"].dropna() for _, group in filtered_df.groupby("Year_of_Study")]
 f_stat, p_val = stats.f_oneway(*anova_groups)
-print("\n2. One-way ANOVA: Stress_Level ~ Year_of_Study")
-print(f"F-statistic = {f_stat}, p-value = {p_val}")
-print("Result:", "Reject H0" if p_val < alpha else "Fail to reject H0")
+st.subheader("2. One-way ANOVA: Stress_Level ~ Year_of_Study")
+st.write(f"F-statistic = {f_stat}, p-value = {p_val}")
+st.write("Result:", "Reject H0" if p_val < alpha else "Fail to reject H0")
 
-# 3. Correlation test (CGPA vs Anxiety_Level)
-corr_coef, p_val = stats.pearsonr(df["CGPA"], df["Anxiety_Level"])
-print("\n3. Correlation test: CGPA vs Anxiety_Level")
-print(f"Correlation coefficient = {corr_coef}, p-value = {p_val}")
-print("Result:", "Reject H0" if p_val < alpha else "Fail to reject H0")
+# 3. Correlation test
+corr_coef, p_val = stats.pearsonr(filtered_df["CGPA"], filtered_df["Anxiety_Level"])
+st.subheader("3. Correlation test: CGPA vs Anxiety_Level")
+st.write(f"Correlation coefficient = {corr_coef}, p-value = {p_val}")
+st.write("Result:", "Reject H0" if p_val < alpha else "Fail to reject H0")
 
-# 4. Proportion test (Chi-square: Gender vs High Anxiety)
-df["Anxiety_High"] = (df["Anxiety_Level"] > df["Anxiety_Level"].mean()).astype(int)
-contingency_table = pd.crosstab(df["Gender"], df["Anxiety_High"])
+# 4. Proportion test (Chi-square)
+filtered_df["Anxiety_High"] = (filtered_df["Anxiety_Level"] > filtered_df["Anxiety_Level"].mean()).astype(int)
+contingency_table = pd.crosstab(filtered_df["Gender"], filtered_df["Anxiety_High"])
 chi2, p_val, dof , expected = stats.chi2_contingency(contingency_table)
-print("\n4. Proportion test (Chi-square): Gender vs High Anxiety")
-print(contingency_table)
-print(f"Chi2 = {chi2}, p-value = {p_val}")
-print("Result:", "Reject H0" if p_val < alpha else "Fail to reject H0")
-
-# ===============================
-# Streamlit + ngrok setup
-# ===============================
-# ngrok.kill()
-# NGROK_AUTH_TOKEN = "32eN4jnYOTeqprDbxQMwVwMvE9c_CD4exrJFA55RG12RMrfo"
-# ngrok.set_auth_token(NGROK_AUTH_TOKEN)
-# public_url = ngrok.connect(8501)
-# print("Streamlit app will be available at:", public_url)
+st.subheader("4. Proportion test (Chi-square): Gender vs High Anxiety")
+st.write(contingency_table)
+st.write(f"Chi2 = {chi2}, p-value = {p_val}")
+st.write("Result:", "Reject H0" if p_val < alpha else "Fail to reject H0")
