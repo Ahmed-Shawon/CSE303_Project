@@ -80,8 +80,8 @@ Univariate and Bivariate
 2. Boxplots
 """
 
-import matplotlib.pyplot as plt
-import seaborn as sns
+# import matplotlib.pyplot as plt
+# import seaborn as sns
 
 numeric_cols = [
     "Age","CGPA","Year_of_Study","Study_Hours_per_Week","Sleep_Quality",
@@ -142,8 +142,8 @@ plt.show()
 
 """# Detect Outliers"""
 
-import matplotlib.pyplot as plt
-import seaborn as sns
+# import matplotlib.pyplot as plt
+# import seaborn as sns
 
 num_cols = df.select_dtypes(include=['number']).columns
 
