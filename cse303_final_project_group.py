@@ -208,8 +208,8 @@ print("Result:", "Reject H0" if p_val < alpha else "Fail to reject H0")
 # ===============================
 # Streamlit + ngrok setup
 # ===============================
-ngrok.kill()
-NGROK_AUTH_TOKEN = "32eN4jnYOTeqprDbxQMwVwMvE9c_CD4exrJFA55RG12RMrfo"
-ngrok.set_auth_token(NGROK_AUTH_TOKEN)
-public_url = ngrok.connect(8501)
-print("Streamlit app will be available at:", public_url)
+# ngrok.kill()
+# NGROK_AUTH_TOKEN = "32eN4jnYOTeqprDbxQMwVwMvE9c_CD4exrJFA55RG12RMrfo"
+# ngrok.set_auth_token(NGROK_AUTH_TOKEN)
+# public_url = ngrok.connect(8501)
+# print("Streamlit app will be available at:", public_url)
